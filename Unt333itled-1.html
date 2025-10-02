@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终极彩蛋 - 烟花庆祝</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .thank-you-message {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .thank-you-message h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: rainbow 3s ease-in-out infinite;
+        }
+
+        .thank-you-message p {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 10px;
+        }
+
+        .special-message {
+            font-size: 1.2rem;
+            color: #4ecdc4;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 10px;
+            border: 1px solid #4ecdc4;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        /* 烟花控制面板 - 固定在左下角 */
+        .fireworks-control {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 100;
+            min-width: 200px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: #4ecdc4;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fireworks-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .fireworks-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4ecdc4;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+
+        .slider-value {
+            min-width: 30px;
+            text-align: center;
+            font-family: monospace;
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        /* 烟花粒子样式 */
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .spark {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        @keyframes rainbow {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes glow {
+            0%, 100% { 
+                box-shadow: 0 0 10px #4ecdc4;
+            }
+            50% { 
+                box-shadow: 0 0 20px #4ecdc4, 0 0 30px #45b7d1;
+            }
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        @keyframes trail {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        .thank-you-message {
+            animation: fadeIn 2s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="thank-you-message">
+        <h1>🎉 终极彩蛋 🎉</h1>
+        <p>你发现了这个终极彩蛋</p>
+        <p>你真厉害</p>
+        <p>把这段代码发给腐竹</p>
+        <div class="special-message">
+            you are so good
+        </div>
+    </div>
+
+    <!-- 烟花控制面板 -->
+    <div class="fireworks-control">
+        <label class="control-label">烟花密度调节</label>
+        <div class="slider-container">
+            <input type="range" min="1" max="10" value="5" class="fireworks-slider" id="fireworksDensity">
+            <span class="slider-value" id="densityValue">5</span>
+        </div>
+    </div>
+
+    <script>
+        // 烟花系统
+        class FireworksSystem {
+            constructor() {
+                this.fireworks = [];
+                this.sparks = [];
+                this.density = 5;
+                this.isRunning = true;
+                this.colors = [
+                    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', 
+                    '#ffd166', '#06d6a0', '#118ab2', '#ef476f',
+                    '#ff9e00', '#00bbf9', '#00f5d4', '#ff0054'
+                ];
+                
+                this.init();
+            }
+            
+            init() {
+                // 初始化密度调节
+                const densitySlider = document.getElementById('fireworksDensity');
+                const densityValue = document.getElementById('densityValue');
+                
+                densitySlider.addEventListener('input', (e) => {
+                    this.density = parseInt(e.target.value);
+                    densityValue.textContent = this.density;
+                });
+                
+                // 开始烟花循环
+                this.launchFireworks();
+                setInterval(() => this.launchFireworks(), 2000);
+                
+                // 动画循环
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            launchFireworks() {
+                if (!this.isRunning) return;
+                
+                const count = Math.floor(this.density * 0.8 + Math.random() * this.density * 0.4);
+                
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        this.createFirework();
+                    }, i * 100);
+                }
+            }
+            
+            createFirework() {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                
+                // 随机位置
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 50;
+                
+                firework.style.left = x + 'px';
+                firework.style.top = y + 'px';
+                
+                // 随机颜色
+                const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+                firework.style.background = color;
+                firework.style.boxShadow = `0 0 10px ${color}`;
+                
+                document.body.appendChild(firework);
+                
+                // 上升动画
+                const targetY = Math.random() * window.innerHeight * 0.6 + 100;
+                const duration = 1000 + Math.random() * 1000;
+                
+                const startTime = Date.now();
+                const animateRise = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    const currentY = y - (y - targetY) * progress;
+                    firework.style.top = currentY + 'px';
+                    
+                    // 添加轨迹效果
+                    if (Math.random() > 0.7) {
+                        this.createTrail(x, currentY, color);
+                    }
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateRise);
+                    } else {
+                        this.explodeFirework(firework, x, targetY, color);
+                    }
+                };
+                
+                animateRise();
+            }
+            
+            createTrail(x, y, color) {
+                const trail = document.createElement('div');
+                trail.className = 'spark';
+                trail.style.left = x + 'px';
+                trail.style.top = y + 'px';
+                trail.style.background = color;
+                trail.style.animation = 'trail 0.5s ease-out forwards';
+                
+                document.body.appendChild(trail);
+                
+                setTimeout(() => {
+                    if (trail.parentNode) {
+                        trail.parentNode.removeChild(trail);
+                    }
+                }, 500);
+            }
+            
+            explodeFirework(firework, x, y, color) {
+                // 移除上升的烟花
+                if (firework.parentNode) {
+                    firework.parentNode.removeChild(firework);
+                }
+                
+                // 创建爆炸效果
+                const sparkCount = 30 + Math.floor(this.density * 3);
+                const explosionSize = 100 + this.density * 20;
+                
+                for (let i = 0; i < sparkCount; i++) {
+                    this.createSpark(x, y, color, explosionSize);
+                }
+                
+                // 创建爆炸光效
+                this.createExplosionEffect(x, y, color);
+            }
+            
+            createSpark(x, y, color, explosionSize) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                
+                spark.style.left = x + 'px';
+                spark.style.top = y + 'px';
+                spark.style.background = color;
+                
+                document.body.appendChild(spark);
+                
+                // 随机方向
+                const angle = Math.random() * Math.PI * 2;
+                const distance = explosionSize * (0.5 + Math.random() * 0.5);
+                const duration = 800 + Math.random() * 400;
+                
+                const targetX = x + Math.cos(angle) * distance;
+                const targetY = y + Math.sin(angle) * distance;
+                
+                const startTime = Date.now();
+                const animateSpark = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    const currentX = x + (targetX - x) * easeOut;
+                    const currentY = y + (targetY - y) * easeOut;
+                    
+                    spark.style.left = currentX + 'px';
+                    spark.style.top = currentY + 'px';
+                    spark.style.opacity = 1 - progress;
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateSpark);
+                    } else {
+                        if (spark.parentNode) {
+                            spark.parentNode.removeChild(spark);
+                        }
+                    }
+                };
+                
+                animateSpark();
+            }
+            
+            createExplosionEffect(x, y, color) {
+                const effect = document.createElement('div');
+                effect.style.position = 'absolute';
+                effect.style.left = (x - 50) + 'px';
+                effect.style.top = (y - 50) + 'px';
+                effect.style.width = '100px';
+                effect.style.height = '100px';
+                effect.style.borderRadius = '50%';
+                effect.style.background = `radial-gradient(circle, ${color}40, transparent 70%)`;
+                effect.style.animation = 'explode 0.5s ease-out forwards';
+                effect.style.zIndex = '3';
+                
+                document.body.appendChild(effect);
+                
+                setTimeout(() => {
+                    if (effect.parentNode) {
+                        effect.parentNode.removeChild(effect);
+                    }
+                }, 500);
+            }
+            
+            animate() {
+                // 清理过期的火花
+                this.cleanupSparks();
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            cleanupSparks() {
+                // 自动清理会在动画结束时进行
+            }
+            
+            setDensity(newDensity) {
+                this.density = Math.max(1, Math.min(10, newDensity));
+            }
+            
+            stop() {
+                this.isRunning = false;
+            }
+            
+            start() {
+                this.isRunning = true;
+                this.launchFireworks();
+            }
+        }
+        
+        // 页面加载完成后初始化烟花系统
+        document.addEventListener('DOMContentLoaded', () => {
+            const fireworks = new FireworksSystem();
+            
+            // 添加点击屏幕发射烟花的功能
+            document.addEventListener('click', (e) => {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        fireworks.createFireworkAt(e.clientX, e.clientY);
+                    }, i * 200);
+                }
+            });
+            
+            // 扩展方法：在指定位置创建烟花
+            FireworksSystem.prototype.createFireworkAt = function(x, y) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                
+                firework.style.left = x + 'px';
+                firework.style.top = y + 'px';
+                
+                const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+                firework.style.background = color;
+                firework.style.boxShadow = `0 0 10px ${color}`;
+                
+                document.body.appendChild(firework);
+                
+                this.explodeFirework(firework, x, y, color);
+            };
+        });
+    </script>
+</body>
+</html>
